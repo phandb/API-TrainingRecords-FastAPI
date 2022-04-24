@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 # SQLALCHEMY_DATABASE_URL = "postgresql://postgres:Thaihoa92@localhost/EmployeeDOC"
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./employeeDOC.db"
+SQLALCHEMY_DATABASE_URL = "sqlite:///./tasks.db"
 
 
 engine = create_engine(
