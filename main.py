@@ -66,5 +66,30 @@ async def create_task(task: Task, db: Session = Depends(get_db)):
     }
 
 
+@app.put("/task/{task_id}")
+async def update_task(task_id: int, task: Task, db: Session = Depends(get_db)):
+    # find task based on id
+    task_model = db.query(models.Tasks)\
+        .filter(models.Tasks.id == task_id)\
+        .first()
+
+    # Check the task_model
+    if task_model is None:
+        raise http_exception()
+
+    task_model.task_name = task.task_name
+    task_model.task_category = task.task_category
+    task_model.date_taken = task.date_taken
+
+    # Update database
+    db.add(task_model)
+    db.commit()
+
+    return {
+        'status': 200,
+        'transaction': 'Successful'
+    }
+
+
 def http_exception():
     return HTTPException(status_code=404, detail="Task not found")
