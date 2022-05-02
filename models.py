@@ -1,8 +1,7 @@
 from sqlalchemy import Boolean, Column, Integer, String, ForeignKey, Date
 from sqlalchemy.orm import relationship
 from database import Base
-import datetime
-
+from datetime import datetime, date
 
 
 class Users(Base):
@@ -17,12 +16,10 @@ class Users(Base):
     is_active = Column(Boolean, default=True)
 
 
-
 class Tasks(Base):
     __tablename__ = "tasks"
 
     id = Column(Integer, primary_key=True, index=True)
     task_name = Column(String)
     task_category = Column(String)
-    date_taken = Column(Date, default=datetime.datetime.now())
-
+    date_taken = Column(Date, default=date.today())

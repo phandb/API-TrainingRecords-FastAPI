@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from fastapi import FastAPI, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from database import engine, SessionLocal
@@ -15,6 +18,12 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+class Task(BaseModel):
+    task_name: str
+    task_category: str
+    date_taken: datetime
 
 
 '''
@@ -38,6 +47,23 @@ async def read_task(task_id: int, db: Session = Depends(get_db)):
     if task_model is not None:
         return task_model
     raise http_exception()
+
+
+@app.post("/")
+async def create_task(task: Task, db: Session = Depends(get_db)):
+    task_model = models.Tasks()
+
+    task_model.task_name = task.task_name
+    task_model.task_category = task.task_category
+    task_model.date_taken = task.date_taken
+
+    db.add(task_model)
+    db.commit()
+
+    return {
+        'status': 201,
+        'transaction': 'Successful'
+    }
 
 
 def http_exception():
