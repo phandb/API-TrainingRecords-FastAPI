@@ -91,5 +91,30 @@ async def update_task(task_id: int, task: Task, db: Session = Depends(get_db)):
     }
 
 
+@app.delete("/task/{task_id}")
+async def delete_task(task_id: int, db: Session = Depends(get_db)):
+    # Retrieve the task based on id
+    task_model = db.query(models.Tasks)\
+        .filter(models.Tasks.id == task_id)\
+        .first()
+
+    # Check for the task
+    if task_model is None:
+        raise http_exception()
+
+    # Delete the object in the database
+    db.query(models.Tasks)\
+        .filter(models.Tasks.id == task_id)\
+        .delete()
+
+    #  Update the database
+    db.commit()
+
+    return {
+        'status': 200,
+        'transaction': 'Successful'
+    }
+
+
 def http_exception():
     return HTTPException(status_code=404, detail="Task not found")
