@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 from sqlalchemy.orm import Session
+from starlette import status
 from starlette.responses import Response
 
 import models
@@ -76,17 +77,20 @@ def create_access_token(username: str, user_id: int,
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-async  def get_current_user(token: str = Depends(oauth2_bearer)):
+async def get_current_user(token: str = Depends(oauth2_bearer)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         user_id: int = payload.get("id")
 
         if username is None or user_id is None:
-            raise HTTPException(status_code=404, detail="User not found!")
+            # raise HTTPException(status_code=404, detail="User not found!")
+            raise get_user_exception()
         return {"username": username, "id": user_id}
     except JWTError:
-        raise HTTPException(status_code=404, detail="User not found!")
+        # raise HTTPException(status_code=404, detail="User not found!")
+        raise get_user_exception()
+
 
 @app.post("/create/user")
 async def create_new_user(create_user: CreateUser, db: Session = Depends(get_db)):
@@ -112,7 +116,8 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
                                  db: Session = Depends(get_db)):
     user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        # raise HTTPException(status_code=404, detail="User not found")
+        raise token_exception()
 
     # return "User Validated!"
     token_expires = timedelta(minutes=60)
@@ -120,7 +125,24 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
                                 user.id,
                                 expires_delta=token_expires)
 
-    return {"token":  token}
+    return {"token": token}
 
 
+# Exceptions
+def get_user_exception():
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
 
+    )
+    return credentials_exception
+
+
+def token_exception():
+    token_exception_response = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Incorrect username or password",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    return token_exception_response
