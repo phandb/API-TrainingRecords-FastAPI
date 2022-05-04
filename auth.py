@@ -2,7 +2,7 @@ from datetime import timedelta, datetime
 
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from jose import jwt
+from jose import jwt, JWTError
 from passlib.context import CryptContext
 from pydantic import BaseModel
 from typing import Optional
@@ -76,6 +76,18 @@ def create_access_token(username: str, user_id: int,
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
+async  def get_current_user(token: str = Depends(oauth2_bearer)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        user_id: int = payload.get("id")
+
+        if username is None or user_id is None:
+            raise HTTPException(status_code=404, detail="User not found!")
+        return {"username": username, "id": user_id}
+    except JWTError:
+        raise HTTPException(status_code=404, detail="User not found!")
+
 @app.post("/create/user")
 async def create_new_user(create_user: CreateUser, db: Session = Depends(get_db)):
     create_user_model = models.Users()
@@ -109,3 +121,6 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
                                 expires_delta=token_expires)
 
     return {"token":  token}
+
+
+
