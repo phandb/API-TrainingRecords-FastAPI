@@ -71,13 +71,20 @@ async def read_task(task_id: int,
     raise http_exception()
 
 
+# modified to get current user
 @app.post("/")
-async def create_task(task: Task, db: Session = Depends(get_db)):
+async def create_task(task: Task,
+                      user: dict = Depends(get_current_user),
+                      db: Session = Depends(get_db)):
+    # Validate the user
+    if user is None:
+        raise get_user_exception()
     task_model = models.Tasks()
 
     task_model.task_name = task.task_name
     task_model.task_category = task.task_category
     task_model.date_taken = task.date_taken
+    task_model.owner_id = user.get("id")  # assign task to current user
 
     db.add(task_model)
     db.commit()
