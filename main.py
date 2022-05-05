@@ -4,6 +4,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from auth import get_current_user, get_user_exception
 from database import engine, SessionLocal
 import models
 
@@ -40,9 +41,30 @@ async def read_all(db: Session = Depends(get_db)):
     return db.query(models.Tasks).all()
 
 
+@app.get("/tasks/user")
+async def read_all_by_user(user: dict = Depends(get_current_user),
+                           db: Session = Depends(get_db)):
+
+    if user is None:
+        raise get_user_exception()
+    return db.query(models.Tasks)\
+        .filter(models.Tasks.owner_id == user.get("id"))\
+        .all()
+
+
+# Add user dictionary to parameter to retrieve task for that user
 @app.get("/task/{task_id}")
-async def read_task(task_id: int, db: Session = Depends(get_db)):
-    task_model = db.query(models.Tasks).filter(models.Tasks.id == task_id).first()
+async def read_task(task_id: int,
+                    user: dict = Depends(get_current_user),
+                    db: Session = Depends(get_db)):
+    # Validate the user
+    if user is None:
+        raise get_user_exception()
+    # retrieve requested task for the user
+    task_model = db.query(models.Tasks)\
+        .filter(models.Tasks.id == task_id)\
+        .filter(models.Tasks.owner_id == user.get("id"))\
+        .first()
 
     if task_model is not None:
         return task_model

@@ -18,7 +18,7 @@ CREATE TABLE tasks(
 	task_name varchar(200) DEFAULT NULL,
 	task_category varchar(80) DEFAULT NULL,
 	date_taken DATE,
-	user_id integer DEFAULT NULL,
+	owner_id integer DEFAULT NULL,
 	PRIMARY KEY (id),
 	FOREIGN KEY (user_id) REFERENCES users(id)
 );
