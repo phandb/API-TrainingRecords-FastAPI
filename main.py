@@ -35,7 +35,7 @@ async def create_database():
 '''
 
 
-# ---------CRUD API-----------------
+# ---------CRUD API End Points-----------------
 @app.get("/")
 async def read_all(db: Session = Depends(get_db)):
     return db.query(models.Tasks).all()
@@ -96,10 +96,17 @@ async def create_task(task: Task,
 
 
 @app.put("/task/{task_id}")
-async def update_task(task_id: int, task: Task, db: Session = Depends(get_db)):
+async def update_task(task_id: int,
+                      task: Task,
+                      user: dict = Depends(get_current_user()),
+                      db: Session = Depends(get_db)):
+    # Validate the user
+    if user is None:
+        raise get_user_exception()
     # find task based on id
     task_model = db.query(models.Tasks)\
         .filter(models.Tasks.id == task_id)\
+        .filter(models.Tasks.owner_id == user.get("id"))\
         .first()
 
     # Check the task_model
