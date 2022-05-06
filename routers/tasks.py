@@ -11,7 +11,11 @@ from database import engine, SessionLocal
 import models
 
 # app = FastAPI()
-router = APIRouter()
+router = APIRouter(
+    prefix="/tasks",
+    tags=["tasks"],
+    responses={404: {"description": "Not Found"}}
+)
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -44,7 +48,7 @@ async def read_all(db: Session = Depends(get_db)):
     return db.query(models.Tasks).all()
 
 
-@router.get("/tasks/user")
+@router.get("/user")
 async def read_all_by_user(user: dict = Depends(get_current_user),
                            db: Session = Depends(get_db)):
     if user is None:
@@ -55,7 +59,7 @@ async def read_all_by_user(user: dict = Depends(get_current_user),
 
 
 # Add user dictionary to parameter to retrieve task for that user
-@router.get("/task/{task_id}")
+@router.get("/{task_id}")
 async def read_task(task_id: int,
                     user: dict = Depends(get_current_user),
                     db: Session = Depends(get_db)):
@@ -97,7 +101,7 @@ async def create_task(task: Task,
     }
 
 
-@router.put("/task/{task_id}")
+@router.put("/{task_id}")
 async def update_task(task_id: int,
                       task: Task,
                       user: dict = Depends(get_current_user),
@@ -129,7 +133,7 @@ async def update_task(task_id: int,
     }
 
 
-@router.delete("/task/{task_id}")
+@router.delete("/{task_id}")
 async def delete_task(task_id: int,
                       user: dict = Depends(get_current_user),
                       db: Session = Depends(get_db)):
