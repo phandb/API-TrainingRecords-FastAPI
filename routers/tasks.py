@@ -1,19 +1,21 @@
-from fastapi import FastAPI
-import models
-from database import engine
-from routers import auth, tasks
+import sys
 
-app = FastAPI()
+sys.path.append("..")
+
+from datetime import datetime
+from fastapi import Depends, HTTPException, APIRouter
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+from .auth import get_current_user, get_user_exception
+from database import engine, SessionLocal
+import models
+
+# app = FastAPI()
+router = APIRouter()
 
 models.Base.metadata.create_all(bind=engine)
 
-# Add auth router to the main app
-app.include_router(auth.router)
-app.include_router(tasks.router)
 
-
-# The following codes were moved to the task.py file
-"""  
 def get_db():
     try:
         db = SessionLocal()
@@ -37,24 +39,23 @@ async def create_database():
 
 
 # ---------CRUD API End Points-----------------
-@app.get("/")
+@router.get("/")
 async def read_all(db: Session = Depends(get_db)):
     return db.query(models.Tasks).all()
 
 
-@app.get("/tasks/user")
+@router.get("/tasks/user")
 async def read_all_by_user(user: dict = Depends(get_current_user),
                            db: Session = Depends(get_db)):
-
     if user is None:
         raise get_user_exception()
-    return db.query(models.Tasks)\
-        .filter(models.Tasks.owner_id == user.get("id"))\
+    return db.query(models.Tasks) \
+        .filter(models.Tasks.owner_id == user.get("id")) \
         .all()
 
 
 # Add user dictionary to parameter to retrieve task for that user
-@app.get("/task/{task_id}")
+@router.get("/task/{task_id}")
 async def read_task(task_id: int,
                     user: dict = Depends(get_current_user),
                     db: Session = Depends(get_db)):
@@ -62,9 +63,9 @@ async def read_task(task_id: int,
     if user is None:
         raise get_user_exception()
     # retrieve requested task for the user
-    task_model = db.query(models.Tasks)\
-        .filter(models.Tasks.id == task_id)\
-        .filter(models.Tasks.owner_id == user.get("id"))\
+    task_model = db.query(models.Tasks) \
+        .filter(models.Tasks.id == task_id) \
+        .filter(models.Tasks.owner_id == user.get("id")) \
         .first()
 
     if task_model is not None:
@@ -73,7 +74,7 @@ async def read_task(task_id: int,
 
 
 # modified to get current user
-@app.post("/")
+@router.post("/")
 async def create_task(task: Task,
                       user: dict = Depends(get_current_user),
                       db: Session = Depends(get_db)):
@@ -96,7 +97,7 @@ async def create_task(task: Task,
     }
 
 
-@app.put("/task/{task_id}")
+@router.put("/task/{task_id}")
 async def update_task(task_id: int,
                       task: Task,
                       user: dict = Depends(get_current_user),
@@ -105,9 +106,9 @@ async def update_task(task_id: int,
     if user is None:
         raise get_user_exception()
     # find task based on id
-    task_model = db.query(models.Tasks)\
-        .filter(models.Tasks.id == task_id)\
-        .filter(models.Tasks.owner_id == user.get("id"))\
+    task_model = db.query(models.Tasks) \
+        .filter(models.Tasks.id == task_id) \
+        .filter(models.Tasks.owner_id == user.get("id")) \
         .first()
 
     # Check the task_model
@@ -128,17 +129,16 @@ async def update_task(task_id: int,
     }
 
 
-@app.delete("/task/{task_id}")
+@router.delete("/task/{task_id}")
 async def delete_task(task_id: int,
                       user: dict = Depends(get_current_user),
                       db: Session = Depends(get_db)):
-
     # Validate user
     if user is None:
         raise get_user_exception()
     # Retrieve the task based on id
-    task_model = db.query(models.Tasks)\
-        .filter(models.Tasks.id == task_id)\
+    task_model = db.query(models.Tasks) \
+        .filter(models.Tasks.id == task_id) \
         .first()
 
     # Check for the task
@@ -146,8 +146,8 @@ async def delete_task(task_id: int,
         raise http_exception()
 
     # Delete the object in the database
-    db.query(models.Tasks)\
-        .filter(models.Tasks.id == task_id)\
+    db.query(models.Tasks) \
+        .filter(models.Tasks.id == task_id) \
         .delete()
 
     #  Update the database
@@ -161,6 +161,3 @@ async def delete_task(task_id: int,
 
 def http_exception():
     return HTTPException(status_code=404, detail="Task not found")
-
-
-"""

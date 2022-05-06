@@ -1,16 +1,16 @@
-from datetime import timedelta, datetime
+import sys
 
-from fastapi import FastAPI, Depends, HTTPException
+sys.path.append("..")
+
+from datetime import timedelta, datetime
+from fastapi import FastAPI, Depends, HTTPException, APIRouter
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from pydantic import BaseModel
 from typing import Optional
-
 from sqlalchemy.orm import Session
 from starlette import status
-from starlette.responses import Response
-
 import models
 from database import engine, SessionLocal
 
@@ -33,7 +33,8 @@ models.Base.metadata.create_all(bind=engine)
 
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="token")
 
-app = FastAPI()
+# app = FastAPI()
+router = APIRouter()  # Changed FastAPI with APIRouter
 
 
 def get_db():
@@ -92,7 +93,8 @@ async def get_current_user(token: str = Depends(oauth2_bearer)):
         raise get_user_exception()
 
 
-@app.post("/create/user")
+# Replaced @app with @router
+@router.post("/create/user")
 async def create_new_user(create_user: CreateUser, db: Session = Depends(get_db)):
     create_user_model = models.Users()
 
@@ -110,8 +112,9 @@ async def create_new_user(create_user: CreateUser, db: Session = Depends(get_db)
     # return create_user_model
 
 
+# Replaced @app with @router
 # method to return JSON web token
-@app.post("/token")
+@router.post("/token")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(),
                                  db: Session = Depends(get_db)):
     user = authenticate_user(form_data.username, form_data.password, db)
