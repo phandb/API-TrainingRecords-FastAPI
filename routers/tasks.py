@@ -6,7 +6,7 @@ from datetime import datetime
 from fastapi import Depends, HTTPException, APIRouter
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from .auth import get_current_user, get_user_exception
+from routers.auth import get_current_user, get_user_exception
 from database import engine, SessionLocal
 import models
 
